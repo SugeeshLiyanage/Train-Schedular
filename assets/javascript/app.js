@@ -8,7 +8,7 @@
 // 5. Create a way to calculate when the next train will arrive. 
 //    Then use moment.js formatting to set difference in time.
 
-
+$(document).ready(function(){
 
 // 1.Initialize Firebase
   var config = {
@@ -30,7 +30,7 @@ $("#add-train-btn").on("click", function(event) {
     //Grabs user inputs
     var trainName = $("#train-name-input").val().trim();
     var trainDestination = $("#destination-input").val().trim();
-    var fTrainTime = $("#first-train-time-input").val().trim();
+    var fTrainTime = moment($("#first-train-time-input").val().trim(), "HH:mm").subtract(10, "years").format("X");
     var trainFrequency = $("#frequency-input").val().trim();
 
     //creates local "temporary" object for holding train data
@@ -42,7 +42,7 @@ $("#add-train-btn").on("click", function(event) {
     };
 
     //Uploads train data to the database
-    firebase.database.ref().push(newTrain);
+    database.ref().push(newTrain);
 
     //Logs everything to console
     console.log(newTrain.name);
@@ -58,28 +58,41 @@ $("#add-train-btn").on("click", function(event) {
     $("#destination-input").val("");
     $("#first-train-time-input").val("");
     $("#frequency-input").val("");
+
+    //Prevents page from refreshing
+    return false;
 });
 
 // 3. Create firebase event for adding train to the database and a row in the html when a user adds a entry
-firebase.database.ref().on("child_added", function(childSnapshot, prevChildKey) {
+database.ref().on("child_added", function(childSnapshot, prevChildKey) {
 
     console.log(childSnapshot.val());
 
     // Store everything into a variable
-    var trainName = childSnapshot.val().name;
-    var trainDestination = childSnapshot.val().destination;
-    var fTrainTime = childSnapshot.val().time;
-    var trainFrequency = childSnapshot.val().frequency;
+    var dbTrainName = childSnapshot.val().name;
+    var dbTrainDestination = childSnapshot.val().destination;
+    var dbfTrainTime = childSnapshot.val().time;
+    var dbTrainFrequency = childSnapshot.val().frequency;
 
-    // Train infor
-    console.log(trainName);
-    console.log(trainDestination);
-    console.log(fTrainTime);
-    console.log(trainFrequency);
+    var diffTime = moment().diff(moment.unix(dbfTrainTime), "minutes");
+    var timeRemainder = moment().diff(moment.unix(dbfTrainTime), "minutes") % dbTrainFrequency;
+    var dbmAway = dbTrainFrequency - timeRemainder;
+
+    var nextTrainArrival = moment().add(dbmAway, "m").format("hh:mm A");
+
+    // Test for correct times and Train infor
+    console.log(dbTrainName);
+    console.log(dbTrainDestination);
+    console.log(dbfTrainTime);
+    console.log(dbTrainFrequency);
+    console.log(dbmAway);
+    console.log(nextTrainArrival);
+    console.log(moment().format("hh:mm A"));
+    console.log(moment().format("X"));
 
 
     // Add each train's data into the table
-    $("#train-table > tbody").append("<tr><td>" + trainName + "</td><td>" + trainDestination + "</td><td>" + 
-    trainFrequency + "</td><td>" + nArrival + "</td><td>" + mAway + "</td></tr>")
+    $("#train-table > tbody").append("<tr><td>" + dbTrainName + "</td><td>" + dbTrainDestination + "</td><td>" + dbTrainFrequency + "mins" + "</td><td>" + nextTrainArrival + "</td><td>" + dbmAway + "</td></tr>");
 
+});
 });
