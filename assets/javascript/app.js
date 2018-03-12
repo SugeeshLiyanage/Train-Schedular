@@ -4,9 +4,8 @@
 // 1. Initialize Firebase
 // 2. Create button for adding new train - then update the html + update the database
 // 3. Create a way to retrieve train from the train database
-// 4. Create a way to retrieve train from the train database.
-// 5. Create a way to calculate when the next train will arrive. 
-//    Then use moment.js formatting to set difference in time.
+// 4. Create a way to calculate when the next train will arrive. 
+// 5. Then use moment.js formatting to set difference in time.
 
 $(document).ready(function(){
 
@@ -92,7 +91,18 @@ database.ref().on("child_added", function(childSnapshot, prevChildKey) {
 
 
     // Add each train's data into the table
-    $("#train-table > tbody").append("<tr><td>" + dbTrainName + "</td><td>" + dbTrainDestination + "</td><td>" + dbTrainFrequency + "mins" + "</td><td>" + nextTrainArrival + "</td><td>" + dbmAway + "</td></tr>");
+    $("#train-table > tbody").append("<tr><td>" + dbTrainName + "</td><td>" + dbTrainDestination + "</td><td>" + dbTrainFrequency + "mins" + "</td><td>" + nextTrainArrival + "</td><td>" + dbmAway + "</td><td><button class='edit btn' data-train><i class='glyphicon glyphicon-pencil'></i></button><button class='delete btn' data-train><i class='glyphicon glyphicon-remove'></i></button></td></tr>");
+    
+    //Delete Key
+
+    $('.'+ dbTrainName).html("<td>" + dbTrainName.trainName + "</td><td>" + dbTrainName.trainDestination + "</td><td>" + dbTrainName.dbTrainFrequency + "</td><td>" + dbTrainName.nextTrainArrival + "</td><td>" + dbTrainName.dbmAway + "</td><td> + <button class='edit btn' data-train><i class='glyphicon glyphicon-pencil'></i></button><button class='delete btn' data-train><i class='glyphicon glyphicon-remove'></i></button></td>"); 
+
+    $(document).on('click','.delete',function(){
+        var trainKey = $(this).attr('data-train');
+        database.ref("trains/" + dbTrainName).remove();
+        $('.'+ dbTrainName).remove();
+    });    
+    });
 
 });
-});
+
