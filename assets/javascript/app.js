@@ -19,90 +19,111 @@ $(document).ready(function(){
     messagingSenderId: "677031263841"
   };
   firebase.initializeApp(config);
-  
-  var database = firebase.database();
+
+//create a variable to reference the database
+  var dataRef = firebase.database();
+
   
 // 2. Button for adding Trains
 $("#add-train-btn").on("click", function(event) {
     event.preventDefault();
 
-    //Grabs user inputs
-    var trainName = $("#train-name-input").val().trim();
-    var trainDestination = $("#destination-input").val().trim();
-    var fTrainTime = moment($("#first-train-time-input").val().trim(), "HH:mm").subtract(10, "years").format("X");
-    var trainFrequency = $("#frequency-input").val().trim();
+      //Grabs user inputs
+    var name = $("#train-name-input").val().trim();
+    var destination = $("#destination-input").val().trim();
+    var firstTrain = $("#first-train-time-input").val().trim();
+    var frequency = $("#frequency-input").val().trim();
 
-    //creates local "temporary" object for holding train data
-    var newTrain = {
-        name: trainName,
-        destination: trainDestination,
-        time: fTrainTime,
-        frequency: trainFrequency
-    };
+    //clear input fields after submit
 
-    //Uploads train data to the database
-    database.ref().push(newTrain);
-
-    //Logs everything to console
-    console.log(newTrain.name);
-    console.log(newTrain.destination);
-    console.log(newTrain.time);
-    console.log(newTrain.frequency);
-
-    //Alert
-    alert("Train Successfully added");
-
-    //Clears all of the text-boxes
     $("#train-name-input").val("");
     $("#destination-input").val("");
     $("#first-train-time-input").val("");
     $("#frequency-input").val("");
 
-    //Prevents page from refreshing
-    return false;
+
+    //creates local "temporary" object for holding train data
+    dataRef.ref().push({
+        name: name,
+        destination: destination,
+        time: firstTrain,
+        frequency: frequency
+    });
 });
 
-// 3. Create firebase event for adding train to the database and a row in the html when a user adds a entry
-database.ref().on("child_added", function(childSnapshot, prevChildKey) {
+  //3. Create firebase event for adding train to the database and a row in the html when a user adds a entry
+    dataRef.ref().on("child_added", function(childSnapshot) {
+        console.log(childSnapshot.val());
 
-    console.log(childSnapshot.val());
+   
 
     // Store everything into a variable
-    var dbTrainName = childSnapshot.val().name;
-    var dbTrainDestination = childSnapshot.val().destination;
-    var dbfTrainTime = childSnapshot.val().time;
-    var dbTrainFrequency = childSnapshot.val().frequency;
+    var name = childSnapshot.val().name;
+    var destination = childSnapshot.val().destination;
+    var time = childSnapshot.val().time;
+    var frequency = childSnapshot.val().frequency;
+    var key = childSnapshot.key;
+    var remove = "<button class='glyphicon glyphicon-trash' id =" + key + "></button>"
 
-    var diffTime = moment().diff(moment.unix(dbfTrainTime), "minutes");
-    var timeRemainder = moment().diff(moment.unix(dbfTrainTime), "minutes") % dbTrainFrequency;
-    var dbmAway = dbTrainFrequency - timeRemainder;
+    //code in math to find the next train time and minutes until next arrival based off of frequency value and first train time value.
 
-    var nextTrainArrival = moment().add(dbmAway, "m").format("hh:mm A");
+        //convert first train time back a year to make sure it is set before current time before pushing to firebase.
 
-    // Test for correct times and Train infor
-    console.log(dbTrainName);
-    console.log(dbTrainDestination);
-    console.log(dbfTrainTime);
-    console.log(dbTrainFrequency);
-    console.log(dbmAway);
-    console.log(nextTrainArrival);
-    console.log(moment().format("hh:mm A"));
-    console.log(moment().format("X"));
+        var firstTrainConverted = moment(time, "hh:mm").subtract(1, "years");
+        console.log(firstTrainConverted);
+
+        //set a variable equal to the current time from moment.js
+
+        var currentTime = moment();
+        console.log("Current Time: " + moment(currentTime).format("hh:mm"));
+
+        //post current time to jumbotron for reference
+
+        $("#currentTime").html("Current Time: " + moment(currentTime).format("hh:mm"));
+
+        //find the difference between the first train time and the current time
+
+        var timeDiff = moment().diff(moment(firstTrainConverted), "minutes");
+        console.log("Difference In Time: " + timeDiff);
 
 
+     //find the time apart by finding the remainder of the time difference and the frequency - use modal to get whole remainder number
+
+     var timeRemainder = timeDiff % frequency;
+     console.log(timeRemainder);
+
+     //find the minutes until the next train
+
+     var nextTrainMin = frequency - timeRemainder;
+     console.log("Minutes Till Train: " + nextTrainMin);
+
+     //find the time of the next train arrival
+
+     var nextTrainAdd = moment().add(nextTrainMin, "minutes");
+     var nextTrainArr = moment(nextTrainAdd).format("hh:mm");
+     console.log("Arrival Time: " + nextTrainArr);
+   
+   
     // Add each train's data into the table
-    $("#train-table > tbody").append("<tr><td>" + dbTrainName + "</td><td>" + dbTrainDestination + "</td><td>" + dbTrainFrequency + "mins" + "</td><td>" + nextTrainArrival + "</td><td>" + dbmAway + "</td><td><button class='edit btn' data-train><i class='glyphicon glyphicon-pencil'></i></button><button class='delete btn' data-train><i class='glyphicon glyphicon-remove'></i></button></td></tr>");
+   
+    $("#train-table").prepend("<tr><td>" + name + "</td><td>" + destination + "</td><td>" + frequency + "</td><td>" + nextTrainArr + "</td><td>" + nextTrainMin + "</td><td>" + remove + "</td></tr>");
+
+
+}, function(err) {
+    console.log(err);
+});
     
-    //Delete Key
+   //on click command to delete key when user clicks the trash can gliphicon
 
-    $('.'+ dbTrainName).html("<td>" + dbTrainName.trainName + "</td><td>" + dbTrainName.trainDestination + "</td><td>" + dbTrainName.dbTrainFrequency + "</td><td>" + dbTrainName.nextTrainArrival + "</td><td>" + dbTrainName.dbmAway + "</td><td> + <button class='edit btn' data-train><i class='glyphicon glyphicon-pencil'></i></button><button class='delete btn' data-train><i class='glyphicon glyphicon-remove'></i></button></td>"); 
+   $(document).on("click", ".glyphicon-trash", deleteTrain);
 
-    $(document).on('click','.delete',function(){
-        var trainKey = $(this).attr('data-train');
-        database.ref("trains/" + dbTrainName).remove();
-        $('.'+ dbTrainName).remove();
-    });    
-    });
+   function deleteTrain() {
+       var deleteKey = $(this).attr("id");
+       //console.log($(this).attr("id"));
+       dataRef.ref().child(deleteKey).remove();
 
+       location.reload();
+
+   }
 });
 
