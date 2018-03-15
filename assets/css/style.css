@@ -16,16 +16,16 @@ body {
     min-height: 50%;
 }
 #h1 {
-    color: rgb(159, 187, 69);
+    color: rgb(39, 96, 202);
 }
 
 h2 {
     color: white;
-    padding: 5%;
+    padding: 5px;
     margin: 5px 400px;
     border-style: inset;
     border-width: 5px;
-    border-radius: 30px;
+    border-radius: 15px;
     border-color: lightblue;
     background-color: gray;
 }
